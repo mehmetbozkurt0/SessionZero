@@ -36,10 +36,12 @@ object CharacterSheetContract {
 
     sealed interface Intent {
         data class UpdateName(val name: String) : Intent
+        data object SaveCharacter : Intent
         data object StartOver : Intent
     }
 
     sealed interface Effect {
         data object NavigateToSystemSelection : Effect
+        data object ShowSaveSuccess : Effect
     }
 }

@@ -2,6 +2,9 @@ package com.sessionzero.sessionzero.feature.charactersheet
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sessionzero.sessionzero.data.character.ActionData
+import com.sessionzero.sessionzero.data.character.CharacterRepository
+import com.sessionzero.sessionzero.data.character.Dnd5eSystemData
 import com.sessionzero.sessionzero.data.dnd5e.DndClass
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,8 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
-class CharacterSheetViewModel(dndClass: DndClass) : ViewModel() {
+class CharacterSheetViewModel(
+    dndClass: DndClass,
+    private val repository: CharacterRepository,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(
         CharacterSheetContract.State(
@@ -30,16 +38,41 @@ class CharacterSheetViewModel(dndClass: DndClass) : ViewModel() {
             is CharacterSheetContract.Intent.UpdateName ->
                 _state.value = _state.value.copy(characterName = intent.name)
 
+            CharacterSheetContract.Intent.SaveCharacter -> saveCharacter()
+
             CharacterSheetContract.Intent.StartOver -> viewModelScope.launch {
                 _effect.send(CharacterSheetContract.Effect.NavigateToSystemSelection)
             }
         }
     }
+
+    private fun saveCharacter() = viewModelScope.launch {
+        val state = _state.value
+        val systemData = Json.encodeToString(
+            Dnd5eSystemData(
+                className = state.dndClass.id,
+                displayName = state.dndClass.displayName,
+                primaryStat = state.dndClass.primaryStat,
+                hp = state.baseHp,
+                armorClass = state.combatStats.armorClass,
+                initiative = state.combatStats.initiative,
+                speedFt = state.combatStats.speedFt,
+                abilityScores = state.abilityScores.associate { it.abbreviation to it.score },
+                actions = state.actions.map { ActionData(it.name, it.attackBonus, it.damage) },
+                startingEquipment = state.dndClass.startingEquipment,
+                backstory = state.backstory,
+            )
+        )
+        repository.saveCharacter(
+            name = state.characterName.ifBlank { state.dndClass.displayName },
+            rpgSystem = "DND5E",
+            systemData = systemData,
+        )
+        _effect.send(CharacterSheetContract.Effect.ShowSaveSuccess)
+    }
 }
 
 // — Mock data yardımcıları —
-// İlerideki hikaye temelli akışta bu fonksiyonların yerini
-// AI çıktısından türetilen gerçek veriler alacak.
 
 private fun mockCombatStats(dndClass: DndClass): CombatStats = when (dndClass) {
     DndClass.BARBARIAN -> CombatStats(armorClass = 13, initiative = +1, speedFt = 30)
@@ -57,84 +90,40 @@ private fun mockCombatStats(dndClass: DndClass): CombatStats = when (dndClass) {
     DndClass.BARD      -> CombatStats(armorClass = 13, initiative = +2, speedFt = 30)
 }
 
-// Standart dizi (15,14,13,12,10,8) her sınıfın önceliğine göre dağıtıldı.
 private fun mockAbilityScores(dndClass: DndClass): List<AbilityScore> {
     fun scores(str: Int, dex: Int, con: Int, int: Int, wis: Int, cha: Int) = listOf(
-        AbilityScore("STR", str),
-        AbilityScore("DEX", dex),
-        AbilityScore("CON", con),
-        AbilityScore("INT", int),
-        AbilityScore("WIS", wis),
-        AbilityScore("CHA", cha),
+        AbilityScore("STR", str), AbilityScore("DEX", dex), AbilityScore("CON", con),
+        AbilityScore("INT", int), AbilityScore("WIS", wis), AbilityScore("CHA", cha),
     )
     return when (dndClass) {
-        DndClass.BARBARIAN -> scores(str=15, dex=13, con=14, int=8,  wis=12, cha=10)
-        DndClass.FIGHTER   -> scores(str=15, dex=13, con=14, int=8,  wis=12, cha=10)
-        DndClass.MONK      -> scores(str=12, dex=15, con=13, int=8,  wis=14, cha=10)
-        DndClass.ROGUE     -> scores(str=10, dex=15, con=13, int=12, wis=8,  cha=14)
-        DndClass.RANGER    -> scores(str=12, dex=15, con=13, int=8,  wis=14, cha=10)
-        DndClass.ARTIFICER -> scores(str=10, dex=14, con=13, int=15, wis=12, cha=8)
-        DndClass.CLERIC    -> scores(str=13, dex=10, con=12, int=8,  wis=15, cha=14)
-        DndClass.PALADIN   -> scores(str=15, dex=10, con=13, int=8,  wis=12, cha=14)
-        DndClass.DRUID     -> scores(str=10, dex=12, con=13, int=8,  wis=15, cha=14)
-        DndClass.WIZARD    -> scores(str=8,  dex=12, con=13, int=15, wis=14, cha=10)
-        DndClass.SORCERER  -> scores(str=8,  dex=13, con=14, int=10, wis=12, cha=15)
-        DndClass.WARLOCK   -> scores(str=10, dex=13, con=14, int=8,  wis=12, cha=15)
-        DndClass.BARD      -> scores(str=8,  dex=14, con=13, int=12, wis=10, cha=15)
+        DndClass.BARBARIAN -> scores(15, 13, 14,  8, 12, 10)
+        DndClass.FIGHTER   -> scores(15, 13, 14,  8, 12, 10)
+        DndClass.MONK      -> scores(12, 15, 13,  8, 14, 10)
+        DndClass.ROGUE     -> scores(10, 15, 13, 12,  8, 14)
+        DndClass.RANGER    -> scores(12, 15, 13,  8, 14, 10)
+        DndClass.ARTIFICER -> scores(10, 14, 13, 15, 12,  8)
+        DndClass.CLERIC    -> scores(13, 10, 12,  8, 15, 14)
+        DndClass.PALADIN   -> scores(15, 10, 13,  8, 12, 14)
+        DndClass.DRUID     -> scores(10, 12, 13,  8, 15, 14)
+        DndClass.WIZARD    -> scores( 8, 12, 13, 15, 14, 10)
+        DndClass.SORCERER  -> scores( 8, 13, 14, 10, 12, 15)
+        DndClass.WARLOCK   -> scores(10, 13, 14,  8, 12, 15)
+        DndClass.BARD      -> scores( 8, 14, 13, 12, 10, 15)
     }
 }
 
 private fun mockActions(dndClass: DndClass): List<CharacterAction> = when (dndClass) {
-    DndClass.BARBARIAN -> listOf(
-        CharacterAction("Büyük Balta",        "+5",    "1d12+3"),
-        CharacterAction("El Çekici (bonus)",  "+5",    "1d6+3"),
-    )
-    DndClass.FIGHTER -> listOf(
-        CharacterAction("Uzun Kılıç",         "+5",    "1d8+3"),
-        CharacterAction("Kalkan Darbesi",     "+5",    "1d4+3"),
-    )
-    DndClass.MONK -> listOf(
-        CharacterAction("Kısa Kılıç",         "+4",    "1d6+2"),
-        CharacterAction("Yumruk (bonus)",     "+4",    "1d4+2"),
-    )
-    DndClass.ROGUE -> listOf(
-        CharacterAction("Kısa Kılıç",         "+4",    "1d6+2 (+2d6 Hile)"),
-        CharacterAction("El Yayı",            "+4",    "1d6+2"),
-    )
-    DndClass.RANGER -> listOf(
-        CharacterAction("Uzun Yay",           "+4",    "1d8+2"),
-        CharacterAction("Kısa Kılıç",         "+4",    "1d6+2"),
-    )
-    DndClass.ARTIFICER -> listOf(
-        CharacterAction("El Çekici",          "+3",    "1d6+1"),
-        CharacterAction("Arcane Firearm",     "+5",    "1d10"),
-    )
-    DndClass.CLERIC -> listOf(
-        CharacterAction("Savaş Çekici",       "+4",    "1d8+2"),
-        CharacterAction("Sacred Flame",       "KUR 13","1d8 Yangın"),
-    )
-    DndClass.PALADIN -> listOf(
-        CharacterAction("Uzun Kılıç",         "+5",    "1d8+3"),
-        CharacterAction("İlahi Yıkım",        "+5",    "1d8+3 +2d8"),
-    )
-    DndClass.DRUID -> listOf(
-        CharacterAction("Şimşek Çarpması",    "+5",    "1d8 Elektrik"),
-        CharacterAction("Eğri Hançer",        "+2",    "1d4"),
-    )
-    DndClass.WIZARD -> listOf(
-        CharacterAction("Sihirli Tüfek",      "+5",    "1d10 Güç"),
-        CharacterAction("Yanan Eller",        "KUR 13","3d6 Ateş"),
-    )
-    DndClass.SORCERER -> listOf(
-        CharacterAction("Alev Patlaması",     "+5",    "1d10 Ateş"),
-        CharacterAction("Büyücü Kalkanı",     "KUR 13","2d8 Şimşek"),
-    )
-    DndClass.WARLOCK -> listOf(
-        CharacterAction("Eldritch Blast",     "+5",    "1d10 Güç"),
-        CharacterAction("Hex (1. slot)",      "—",     "+1d6 Lanet"),
-    )
-    DndClass.BARD -> listOf(
-        CharacterAction("Rapiyer",            "+4",    "1d8+2"),
-        CharacterAction("Vicious Mockery",    "KUR 13","1d4 Psiyo."),
-    )
+    DndClass.BARBARIAN -> listOf(CharacterAction("Büyük Balta",       "+5",    "1d12+3"), CharacterAction("El Çekici (bonus)", "+5", "1d6+3"))
+    DndClass.FIGHTER   -> listOf(CharacterAction("Uzun Kılıç",        "+5",    "1d8+3"),  CharacterAction("Kalkan Darbesi",    "+5", "1d4+3"))
+    DndClass.MONK      -> listOf(CharacterAction("Kısa Kılıç",        "+4",    "1d6+2"),  CharacterAction("Yumruk (bonus)",    "+4", "1d4+2"))
+    DndClass.ROGUE     -> listOf(CharacterAction("Kısa Kılıç",        "+4",    "1d6+2 (+2d6)"), CharacterAction("El Yayı",   "+4", "1d6+2"))
+    DndClass.RANGER    -> listOf(CharacterAction("Uzun Yay",          "+4",    "1d8+2"),  CharacterAction("Kısa Kılıç",       "+4", "1d6+2"))
+    DndClass.ARTIFICER -> listOf(CharacterAction("El Çekici",         "+3",    "1d6+1"),  CharacterAction("Arcane Firearm",   "+5", "1d10"))
+    DndClass.CLERIC    -> listOf(CharacterAction("Savaş Çekici",      "+4",    "1d8+2"),  CharacterAction("Sacred Flame",   "KUR 13", "1d8"))
+    DndClass.PALADIN   -> listOf(CharacterAction("Uzun Kılıç",        "+5",    "1d8+3"),  CharacterAction("İlahi Yıkım",      "+5", "1d8+3+2d8"))
+    DndClass.DRUID     -> listOf(CharacterAction("Şimşek Çarpması",   "+5",    "1d8"),     CharacterAction("Eğri Hançer",     "+2", "1d4"))
+    DndClass.WIZARD    -> listOf(CharacterAction("Sihirli Tüfek",     "+5",    "1d10"),   CharacterAction("Yanan Eller",    "KUR 13", "3d6"))
+    DndClass.SORCERER  -> listOf(CharacterAction("Alev Patlaması",    "+5",    "1d10"),   CharacterAction("Büyücü Kalkanı", "KUR 13", "2d8"))
+    DndClass.WARLOCK   -> listOf(CharacterAction("Eldritch Blast",    "+5",    "1d10"),   CharacterAction("Hex (1. slot)",    "—",  "+1d6"))
+    DndClass.BARD      -> listOf(CharacterAction("Rapiyer",           "+4",    "1d8+2"),  CharacterAction("Vicious Mockery","KUR 13", "1d4"))
 }

@@ -1,5 +1,8 @@
 package com.sessionzero.sessionzero.feature.charactersheet
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -26,6 +31,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,7 +42,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sessionzero.sessionzero.data.character.CharacterRepository
 import com.sessionzero.sessionzero.data.dnd5e.DndClass
+import kotlinx.coroutines.delay
 import com.sessionzero.sessionzero.ui.theme.LocalSessionZeroAccent
 import com.sessionzero.sessionzero.ui.theme.accentColor
 
@@ -43,21 +53,32 @@ import com.sessionzero.sessionzero.ui.theme.accentColor
 @Composable
 fun CharacterSheetScreen(
     dndClass: DndClass,
-    viewModel: CharacterSheetViewModel = viewModel { CharacterSheetViewModel(dndClass) },
+    characterRepository: CharacterRepository,
+    viewModel: CharacterSheetViewModel = viewModel { CharacterSheetViewModel(dndClass, characterRepository) },
     onNavigateToSystemSelection: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var showSavedMessage by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 CharacterSheetContract.Effect.NavigateToSystemSelection -> onNavigateToSystemSelection()
+                CharacterSheetContract.Effect.ShowSaveSuccess -> {
+                    showSavedMessage = true
+                    delay(2500)
+                    showSavedMessage = false
+                }
             }
         }
     }
 
     CompositionLocalProvider(LocalSessionZeroAccent provides dndClass.category.accentColor) {
-        CharacterSheetContent(state = state, onIntent = viewModel::onIntent)
+        CharacterSheetContent(
+            state = state,
+            showSavedMessage = showSavedMessage,
+            onIntent = viewModel::onIntent,
+        )
     }
 }
 
@@ -66,6 +87,7 @@ fun CharacterSheetScreen(
 @Composable
 private fun CharacterSheetContent(
     state: CharacterSheetContract.State,
+    showSavedMessage: Boolean,
     onIntent: (CharacterSheetContract.Intent) -> Unit,
 ) {
     val accent = LocalSessionZeroAccent.current
@@ -155,6 +177,35 @@ private fun CharacterSheetContent(
         )
 
         Spacer(Modifier.height(48.dp))
+
+        Button(
+            onClick = { onIntent(CharacterSheetContract.Intent.SaveCharacter) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = accent),
+        ) {
+            Text(
+                text = "Karakteri Kaydet",
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+
+        AnimatedVisibility(
+            visible = showSavedMessage,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Text(
+                text = "✓ Karakter başarıyla kaydedildi",
+                style = MaterialTheme.typography.bodySmall,
+                color = accent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
 
         OutlinedButton(
             onClick = { onIntent(CharacterSheetContract.Intent.StartOver) },

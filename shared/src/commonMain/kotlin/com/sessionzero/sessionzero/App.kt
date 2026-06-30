@@ -6,7 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.sessionzero.sessionzero.data.character.CharacterRepository
 import com.sessionzero.sessionzero.data.dnd5e.DndClass
+import com.sessionzero.sessionzero.feature.characterlist.CharacterListScreen
 import com.sessionzero.sessionzero.feature.charactersheet.CharacterSheetScreen
 import com.sessionzero.sessionzero.feature.decisiontree.DecisionTreeScreen
 import com.sessionzero.sessionzero.feature.systemselection.SystemSelectionScreen
@@ -14,14 +16,23 @@ import com.sessionzero.sessionzero.navigation.AppDestination
 import com.sessionzero.sessionzero.ui.theme.SessionZeroTheme
 
 @Composable
-fun App() {
+fun App(characterRepository: CharacterRepository) {
     SessionZeroTheme {
         val navController = rememberNavController()
 
         NavHost(
             navController = navController,
-            startDestination = AppDestination.SYSTEM_SELECTION,
+            startDestination = AppDestination.CHARACTER_LIST,
         ) {
+            composable(AppDestination.CHARACTER_LIST) {
+                CharacterListScreen(
+                    characterRepository = characterRepository,
+                    onNavigateToCreateCharacter = {
+                        navController.navigate(AppDestination.SYSTEM_SELECTION)
+                    },
+                )
+            }
+
             composable(AppDestination.SYSTEM_SELECTION) {
                 SystemSelectionScreen(
                     onNavigateToDecisionTree = {
@@ -49,9 +60,10 @@ fun App() {
                 val dndClass = classId?.let { DndClass.fromId(it) } ?: return@composable
                 CharacterSheetScreen(
                     dndClass = dndClass,
+                    characterRepository = characterRepository,
                     onNavigateToSystemSelection = {
-                        navController.navigate(AppDestination.SYSTEM_SELECTION) {
-                            popUpTo(AppDestination.SYSTEM_SELECTION) { inclusive = true }
+                        navController.navigate(AppDestination.CHARACTER_LIST) {
+                            popUpTo(AppDestination.CHARACTER_LIST) { inclusive = true }
                         }
                     },
                 )

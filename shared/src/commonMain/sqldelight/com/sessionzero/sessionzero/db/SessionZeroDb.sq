@@ -1,0 +1,19 @@
+CREATE TABLE CharacterEntity (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL,
+    rpg_system  TEXT    NOT NULL,
+    system_data TEXT    NOT NULL
+);
+
+insertCharacter:
+INSERT INTO CharacterEntity (name, rpg_system, system_data)
+VALUES (?, ?, ?);
+
+selectAllCharacters:
+SELECT * FROM CharacterEntity;
+
+selectCharacterById:
+SELECT * FROM CharacterEntity WHERE id = ?;
+
+deleteCharacter:
+DELETE FROM CharacterEntity WHERE id = ?;

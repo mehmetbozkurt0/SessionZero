@@ -1,6 +1,7 @@
 package com.sessionzero.sessionzero.navigation
 
 object AppDestination {
+    const val CHARACTER_LIST = "character_list"
     const val SYSTEM_SELECTION = "system_selection"
     const val DECISION_TREE = "decision_tree"
     private const val CHARACTER_SHEET_BASE = "character_sheet"

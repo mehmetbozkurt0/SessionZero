@@ -4,22 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.sessionzero.sessionzero.data.character.CharacterRepositoryImpl
+import com.sessionzero.sessionzero.db.SessionZeroDb
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        val driver = AndroidSqliteDriver(
+            schema = SessionZeroDb.Schema,
+            context = this,
+            name = "sessionzero.db",
+        )
+        val database = SessionZeroDb(driver)
+        val characterRepository = CharacterRepositoryImpl(database)
+
         setContent {
-            App()
+            App(characterRepository = characterRepository)
         }
     }
-}
-
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
 }
