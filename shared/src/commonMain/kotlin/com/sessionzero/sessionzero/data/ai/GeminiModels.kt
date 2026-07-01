@@ -3,7 +3,7 @@ package com.sessionzero.sessionzero.data.ai
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// — Gemini HTTP istek modelleri —
+// — Gemini HTTP request models —
 
 @Serializable
 data class GeminiRequest(
@@ -35,7 +35,7 @@ data class GeminiGenerationConfig(
     val responseMimeType: String = "application/json",
 )
 
-// — Gemini HTTP yanıt modelleri —
+// — Gemini HTTP response models —
 
 @Serializable
 data class GeminiResponse(
@@ -47,7 +47,7 @@ data class GeminiCandidate(
     val content: GeminiContent,
 )
 
-// — İç karakter JSON modeli (Gemini'nin ürettiği) —
+// — Internal character JSON model (produced by Gemini) —
 
 @Serializable
 data class GeminiCharacterResult(

@@ -51,7 +51,7 @@ class AiRepositoryImpl : AiRepository {
 
         val rawText = response.candidates
             .firstOrNull()?.content?.parts?.firstOrNull()?.text
-            ?: error("Gemini boş yanıt döndürdü.")
+            ?: error("Gemini returned an empty response.")
 
         val cleanedText = rawText.trim()
             .removePrefix("```json")
@@ -92,16 +92,16 @@ class AiRepositoryImpl : AiRepository {
 }
 
 private const val SYSTEM_INSTRUCTION = """
-Sen uzman bir D&D 5E Dungeon Master'sın. Kullanıcının verdiği hikayeyi analiz et.
+You are an expert D&D 5E Dungeon Master. Analyze the story the user provides.
 
-Kurallar:
-* Standart 27 puanlık Point Buy sistemini kullanarak 6 temel niteliği (STR, DEX, CON, INT, WIS, CHA) dağıt.
-* Hikayeye en uygun Irkı (Race) seç ve ırkın stat bonuslarını temel niteliklere ekle.
-* Sınıfı (Class), Alt Sınıf Önerisini (Subclass Suggestion) ve Geçmişi (Background) belirle.
-* Seviye kurallarına göre Maksimum HP'yi (Sınıfın Max Zar Değeri + CON Değiştiricisi), İnisiyatifi (DEX Değiştiricisi) ve AC'yi (Standart zırh + DEX durumu) hesapla.
+Rules:
+* Distribute the 6 ability scores (STR, DEX, CON, INT, WIS, CHA) using the standard 27-point Point Buy system.
+* Choose the Race that best fits the story and add the race's stat bonuses to the ability scores.
+* Determine the Class, a Subclass Suggestion, and a Background.
+* Following leveling rules, calculate Max HP (class's max hit die value + CON modifier), Initiative (DEX modifier), and AC (standard armor + DEX considerations).
 
-ÖNEMLİ: Aşağıdaki JSON sadece veri yapısını (schema) göstermek içindir. İçindeki değerleri ASLA birebir kullanma. Irk, Sınıf, Alt Sınıf, Statlar ve diğer tüm değerleri TAMAMEN kullanıcının verdiği hikayeye göre mantıksal bir analiz yaparak KENDİN belirlemelisin.
+IMPORTANT: The JSON below is only meant to show the data structure (schema). NEVER use its values verbatim. You must determine the Race, Class, Subclass, Stats, and every other value YOURSELF through a logical analysis based ENTIRELY on the story the user provided.
 
-Sadece şu formattaki JSON çıktısını ver, markdown veya ekstra metin kullanma:
+Respond with only JSON in the following format, no markdown or extra text:
 {"race":"...","className":"...","subclassSuggestion":"...","background":"...","stats":{"str":0,"dex":0,"con":0,"int":0,"wis":0,"cha":0},"derived":{"hp":0,"ac":0,"initiative":0},"storySummary":"..."}
 """

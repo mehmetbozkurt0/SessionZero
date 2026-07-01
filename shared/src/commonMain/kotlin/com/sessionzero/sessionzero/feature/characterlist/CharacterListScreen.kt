@@ -83,13 +83,13 @@ fun CharacterListScreen(
             Spacer(Modifier.height(48.dp))
 
             Text(
-                text = "Karakterlerim",
+                text = "My Characters",
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "Kayıtlı maceraperestler",
+                text = "Your saved adventurers",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
@@ -151,7 +151,7 @@ private fun CharacterCard(
                     .padding(vertical = 14.dp),
             ) {
                 Text(
-                    text = item.name.ifBlank { "İsimsiz Kahraman" },
+                    text = item.name.ifBlank { "Unnamed Hero" },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -206,13 +206,13 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "Henüz kaydedilmiş karakter yok",
+            text = "No saved characters yet",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Yeni bir kahraman yaratmak için\nsağ alttaki + butonuna dokun",
+            text = "Tap the + button below\nto create a new hero",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

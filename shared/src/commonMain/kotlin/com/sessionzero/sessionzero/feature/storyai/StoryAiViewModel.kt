@@ -45,7 +45,7 @@ class StoryAiViewModel(
     private fun analyzeStory() {
         val story = _state.value.story.trim()
         if (story.isBlank()) {
-            _state.update { it.copy(errorMessage = "Lütfen karakterinin hikayesini gir.") }
+            _state.update { it.copy(errorMessage = "Please enter your character's story.") }
             return
         }
         viewModelScope.launch {
@@ -67,8 +67,8 @@ class StoryAiViewModel(
                     val message = when {
                         e.message?.contains("timeout", ignoreCase = true) == true ||
                         e.message?.contains("timed out", ignoreCase = true) == true ->
-                            "Sunucu yanıt vermedi, tekrar deneyin."
-                        else -> e.message ?: "Bir hata oluştu."
+                            "The server didn't respond, please try again."
+                        else -> e.message ?: "An error occurred."
                     }
                     _state.update { it.copy(errorMessage = message) }
                 }

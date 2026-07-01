@@ -23,18 +23,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sessionzero.sessionzero.data.dnd5e.DndClass
+import com.sessionzero.sessionzero.navigation.CreationMethod
 
 @Composable
 fun SystemSelectionScreen(
-    viewModel: SystemSelectionViewModel = viewModel { SystemSelectionViewModel() },
+    creationMethod: CreationMethod,
+    viewModel: SystemSelectionViewModel = viewModel(
+        key = "system_selection_$creationMethod"
+    ) { SystemSelectionViewModel(creationMethod) },
+    onNavigateToStoryAi: () -> Unit,
     onNavigateToDecisionTree: () -> Unit,
+    onNavigateToBlankSheet: (DndClass) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
+                SystemSelectionContract.Effect.NavigateToStoryAi -> onNavigateToStoryAi()
                 SystemSelectionContract.Effect.NavigateToDecisionTree -> onNavigateToDecisionTree()
+                is SystemSelectionContract.Effect.NavigateToBlankSheet -> onNavigateToBlankSheet(effect.dndClass)
             }
         }
     }
@@ -53,7 +62,11 @@ fun SystemSelectionScreen(
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "Sisteminizi seçin",
+            text = when (state.creationMethod) {
+                CreationMethod.STORY_AI -> "Which system would you like to build with AI?"
+                CreationMethod.GUIDED -> "Which system would you like to create a character for?"
+                CreationMethod.BLANK_SHEET -> "Which system's blank sheet would you like to fill out?"
+            },
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 6.dp),
@@ -103,7 +116,7 @@ private fun SystemCard(system: RpgSystem, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.surfaceVariant,
                 ) {
                     Text(
-                        text = "Yakında",
+                        text = "Coming Soon",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

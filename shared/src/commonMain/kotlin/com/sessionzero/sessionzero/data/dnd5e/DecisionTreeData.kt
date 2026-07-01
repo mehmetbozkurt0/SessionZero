@@ -10,6 +10,7 @@ data class DecisionOption(
 data class DecisionQuestion(
     val id: String,
     val text: String,
+    val stepLabel: String,
     val options: List<DecisionOption>,
 )
 
@@ -17,28 +18,30 @@ object DecisionTreeData {
 
     val rootQuestion = DecisionQuestion(
         id = "q1",
-        text = "Maceraya atılırken temel yaklaşımın nedir?",
+        text = "What's your core approach to adventuring?",
+        stepLabel = "Approach",
         options = listOf(
             DecisionOption(
                 id = "physical",
-                label = "Fiziksel Güç ve Silahlar",
+                label = "Physical Might and Weapons",
                 nextQuestion = DecisionQuestion(
                     id = "q2_physical",
-                    text = "Savaşırken neye güvenirsin?",
+                    text = "What do you rely on in a fight?",
+                    stepLabel = "Class",
                     options = listOf(
                         DecisionOption(
                             id = "barbarian",
-                            label = "Öfke ve kaba kuvvet",
+                            label = "Rage and raw power",
                             result = DndClass.BARBARIAN,
                         ),
                         DecisionOption(
                             id = "fighter",
-                            label = "Silah ve taktik ustalığı",
+                            label = "Weapon and tactical mastery",
                             result = DndClass.FIGHTER,
                         ),
                         DecisionOption(
                             id = "monk",
-                            label = "Çıplak el ve mistik disiplin",
+                            label = "Bare hands and mystic discipline",
                             result = DndClass.MONK,
                         ),
                     ),
@@ -46,24 +49,25 @@ object DecisionTreeData {
             ),
             DecisionOption(
                 id = "stealth",
-                label = "Gizlilik ve Ustalık",
+                label = "Stealth and Precision",
                 nextQuestion = DecisionQuestion(
                     id = "q2_stealth",
-                    text = "Uzmanlık alanın nedir?",
+                    text = "What's your area of expertise?",
+                    stepLabel = "Class",
                     options = listOf(
                         DecisionOption(
                             id = "rogue",
-                            label = "Gölgeler ve suikast",
+                            label = "Shadows and assassination",
                             result = DndClass.ROGUE,
                         ),
                         DecisionOption(
                             id = "ranger",
-                            label = "Okçuluk ve vahşi doğa avcılığı",
+                            label = "Archery and wilderness hunting",
                             result = DndClass.RANGER,
                         ),
                         DecisionOption(
                             id = "artificer",
-                            label = "Mekanik icatlar ve aletler",
+                            label = "Mechanical inventions and tools",
                             result = DndClass.ARTIFICER,
                         ),
                     ),
@@ -71,24 +75,25 @@ object DecisionTreeData {
             ),
             DecisionOption(
                 id = "divine",
-                label = "İlahiyat ve Doğa",
+                label = "Divinity and Nature",
                 nextQuestion = DecisionQuestion(
                     id = "q2_divine",
-                    text = "Gücünü nereden alırsın?",
+                    text = "Where does your power come from?",
+                    stepLabel = "Class",
                     options = listOf(
                         DecisionOption(
                             id = "cleric",
-                            label = "Tanrılara adanmışlık ve şifa",
+                            label = "Devotion to the gods and healing",
                             result = DndClass.CLERIC,
                         ),
                         DecisionOption(
                             id = "paladin",
-                            label = "Kutsal yeminler ve ağır zırh",
+                            label = "Sacred oaths and heavy armor",
                             result = DndClass.PALADIN,
                         ),
                         DecisionOption(
                             id = "druid",
-                            label = "Doğanın dengesi ve hayvanlara dönüşme",
+                            label = "Nature's balance and shapeshifting",
                             result = DndClass.DRUID,
                         ),
                     ),
@@ -96,29 +101,30 @@ object DecisionTreeData {
             ),
             DecisionOption(
                 id = "magic",
-                label = "Saf Büyü ve İlim",
+                label = "Arcane Magic and Lore",
                 nextQuestion = DecisionQuestion(
                     id = "q2_magic",
-                    text = "Büyü gücün nerede yatıyor?",
+                    text = "Where does your magic power lie?",
+                    stepLabel = "Class",
                     options = listOf(
                         DecisionOption(
                             id = "wizard",
-                            label = "Kitaplardan çalışarak öğrenilen büyü",
+                            label = "Magic learned from studying books",
                             result = DndClass.WIZARD,
                         ),
                         DecisionOption(
                             id = "sorcerer",
-                            label = "Kanından gelen doğuştan güç",
+                            label = "Innate power from your bloodline",
                             result = DndClass.SORCERER,
                         ),
                         DecisionOption(
                             id = "warlock",
-                            label = "Yüce bir varlıkla yapılan anlaşma",
+                            label = "A pact made with an otherworldly being",
                             result = DndClass.WARLOCK,
                         ),
                         DecisionOption(
                             id = "bard",
-                            label = "Müzik ve sanatın büyüsü",
+                            label = "The magic of music and art",
                             result = DndClass.BARD,
                         ),
                     ),

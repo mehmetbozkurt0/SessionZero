@@ -18,6 +18,10 @@ data class Dnd5eSystemData(
     val race: String = "",
     val subclassSuggestion: String = "",
     val background: String = "",
+    val level: Int = 1,
+    val skillProficiencies: Set<String> = emptySet(),
+    val deathSaveSuccesses: Int = 0,
+    val deathSaveFailures: Int = 0,
 )
 
 @Serializable

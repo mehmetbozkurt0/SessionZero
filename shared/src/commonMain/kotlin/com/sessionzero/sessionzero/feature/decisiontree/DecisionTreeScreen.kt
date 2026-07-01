@@ -1,7 +1,9 @@
 package com.sessionzero.sessionzero.feature.decisiontree
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -51,30 +55,24 @@ fun DecisionTreeScreen(
             .padding(horizontal = 24.dp),
     ) {
         Spacer(Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            TextButton(onClick = { viewModel.onIntent(DecisionTreeContract.Intent.BackPressed) }) {
-                Text(
-                    text = "← Geri",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+        TextButton(onClick = { viewModel.onIntent(DecisionTreeContract.Intent.BackPressed) }) {
             Text(
-                text = "${state.stepIndex + 1} / ${state.totalSteps}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 4.dp),
+                text = "← Back",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
         }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = "STEP ${state.stepIndex + 1} OF ${state.totalSteps}: ${state.question.stepLabel.uppercase()}",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(8.dp))
         LinearProgressIndicator(
             progress = { (state.stepIndex + 1).toFloat() / state.totalSteps },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
         )
@@ -86,8 +84,9 @@ fun DecisionTreeScreen(
             color = MaterialTheme.colorScheme.onBackground,
         )
         Spacer(Modifier.height(32.dp))
-        state.question.options.forEach { option ->
+        state.question.options.forEachIndexed { index, option ->
             OptionCard(
+                index = index,
                 label = option.label,
                 onClick = { viewModel.onIntent(DecisionTreeContract.Intent.OptionSelected(option)) },
             )
@@ -97,20 +96,38 @@ fun DecisionTreeScreen(
 }
 
 @Composable
-private fun OptionCard(label: String, onClick: () -> Unit) {
+private fun OptionCard(index: Int, label: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = MaterialTheme.shapes.large,
+            )
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = ('A' + index).toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,

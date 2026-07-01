@@ -60,7 +60,7 @@ fun StoryAiScreen(
         Spacer(Modifier.height(48.dp))
 
         Text(
-            text = "Karakterinin hikayesini anlat",
+            text = "Tell your character's story",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -69,7 +69,7 @@ fun StoryAiScreen(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Motivasyonunu, geçmişini ya da kişiliğini yaz. Yapay zeka sana en uygun D&D 5E sınıfını önerecek.",
+            text = "Write about your motivation, background, or personality. The AI will suggest the best D&D 5E class for you.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -84,7 +84,7 @@ fun StoryAiScreen(
                 .height(240.dp),
             placeholder = {
                 Text(
-                    text = "Örnek: \"Ormanda büyüyen, ata ruhlarıyla konuşabilen bir şamandım. Köyüm yakılınca intikam yemini ettim...\"",
+                    text = "Example: \"I grew up in the forest, a shaman who could speak with ancestor spirits. When my village was burned, I swore an oath of vengeance...\"",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -121,10 +121,10 @@ fun StoryAiScreen(
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
                 Spacer(Modifier.size(10.dp))
-                Text("Analiz ediliyor...")
+                Text("Analyzing...")
             } else {
                 Text(
-                    text = "Karakterimi Analiz Et",
+                    text = "Analyze My Character",
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -137,7 +137,7 @@ fun StoryAiScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
             Text(
-                text = "Geri",
+                text = "Back",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

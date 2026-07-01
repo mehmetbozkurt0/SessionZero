@@ -1,8 +1,12 @@
 package com.sessionzero.sessionzero.feature.systemselection
 
+import com.sessionzero.sessionzero.data.dnd5e.DndClass
+import com.sessionzero.sessionzero.navigation.CreationMethod
+
 object SystemSelectionContract {
 
     data class State(
+        val creationMethod: CreationMethod = CreationMethod.GUIDED,
         val systems: List<RpgSystem> = RpgSystem.entries.toList(),
     )
 
@@ -11,7 +15,9 @@ object SystemSelectionContract {
     }
 
     sealed interface Effect {
+        data object NavigateToStoryAi : Effect
         data object NavigateToDecisionTree : Effect
+        data class NavigateToBlankSheet(val dndClass: DndClass) : Effect
     }
 }
 
