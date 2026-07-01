@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import com.sessionzero.sessionzero.data.ai.AiRepositoryImpl
 import com.sessionzero.sessionzero.data.character.CharacterRepositoryImpl
 import com.sessionzero.sessionzero.db.SessionZeroDb
 
@@ -20,9 +21,13 @@ class MainActivity : ComponentActivity() {
         )
         val database = SessionZeroDb(driver)
         val characterRepository = CharacterRepositoryImpl(database)
+        val aiRepository = AiRepositoryImpl()
 
         setContent {
-            App(characterRepository = characterRepository)
+            App(
+                characterRepository = characterRepository,
+                aiRepository = aiRepository,
+            )
         }
     }
 }

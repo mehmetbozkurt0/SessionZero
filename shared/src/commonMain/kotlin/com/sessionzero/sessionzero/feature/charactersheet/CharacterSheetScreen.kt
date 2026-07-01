@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
@@ -25,6 +28,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,9 +57,12 @@ import com.sessionzero.sessionzero.ui.theme.accentColor
 
 @Composable
 fun CharacterSheetScreen(
-    dndClass: DndClass,
+    dndClass: DndClass?,
+    characterId: Long?,
     characterRepository: CharacterRepository,
-    viewModel: CharacterSheetViewModel = viewModel { CharacterSheetViewModel(dndClass, characterRepository) },
+    viewModel: CharacterSheetViewModel = viewModel(
+        key = "sheet_${characterId}_${dndClass?.id}"
+    ) { CharacterSheetViewModel(dndClass, characterId, characterRepository) },
     onNavigateToSystemSelection: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -73,12 +81,23 @@ fun CharacterSheetScreen(
         }
     }
 
-    CompositionLocalProvider(LocalSessionZeroAccent provides dndClass.category.accentColor) {
-        CharacterSheetContent(
-            state = state,
-            showSavedMessage = showSavedMessage,
-            onIntent = viewModel::onIntent,
-        )
+    val accent = state.dndClass?.category?.accentColor ?: Color(0xFF1A1A2E)
+
+    CompositionLocalProvider(LocalSessionZeroAccent provides accent) {
+        if (state.isLoading || state.dndClass == null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
+            CharacterSheetContent(
+                state = state,
+                showSavedMessage = showSavedMessage,
+                onIntent = viewModel::onIntent,
+            )
+        }
     }
 }
 
@@ -91,6 +110,7 @@ private fun CharacterSheetContent(
     onIntent: (CharacterSheetContract.Intent) -> Unit,
 ) {
     val accent = LocalSessionZeroAccent.current
+    val dndClass = state.dndClass!! // guarded by caller
 
     Column(
         modifier = Modifier
@@ -101,7 +121,14 @@ private fun CharacterSheetContent(
     ) {
         Spacer(Modifier.height(48.dp))
 
-        ClassHeader(dndClass = state.dndClass, accent = accent)
+        ClassHeader(dndClass = dndClass, accent = accent)
+
+        AiTagRow(
+            race = state.race,
+            subclassSuggestion = state.subclassSuggestion,
+            background = state.background,
+            accent = accent,
+        )
 
         Spacer(Modifier.height(24.dp))
 
@@ -162,7 +189,7 @@ private fun CharacterSheetContent(
         Spacer(Modifier.height(28.dp))
         SectionHeader(title = "Başlangıç Ekipmanı", accent = accent)
         Spacer(Modifier.height(12.dp))
-        state.dndClass.startingEquipment.forEach { item ->
+        dndClass.startingEquipment.forEach { item ->
             EquipmentRow(item = item, accent = accent)
             Spacer(Modifier.height(6.dp))
         }
@@ -465,6 +492,51 @@ private fun StatValue(text: String) {
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onBackground,
     )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AiTagRow(
+    race: String,
+    subclassSuggestion: String,
+    background: String,
+    accent: Color,
+) {
+    data class Tag(val label: String, val value: String)
+
+    val tags = buildList {
+        if (race.isNotBlank()) add(Tag("Irk", race))
+        if (subclassSuggestion.isNotBlank()) add(Tag("Alt Sınıf", subclassSuggestion))
+        if (background.isNotBlank()) add(Tag("Geçmiş", background))
+    }
+    if (tags.isEmpty()) return
+
+    Spacer(Modifier.height(12.dp))
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        tags.forEach { (label, value) ->
+            SuggestionChip(
+                onClick = {},
+                label = {
+                    Text(
+                        text = "$label: $value",
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                },
+                border = SuggestionChipDefaults.suggestionChipBorder(
+                    enabled = true,
+                    borderColor = accent.copy(alpha = 0.35f),
+                ),
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    labelColor = accent,
+                    containerColor = accent.copy(alpha = 0.07f),
+                ),
+            )
+        }
+    }
 }
 
 // — Yardımcı fonksiyon —

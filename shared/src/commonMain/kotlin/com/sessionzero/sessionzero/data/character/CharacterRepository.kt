@@ -3,7 +3,9 @@ package com.sessionzero.sessionzero.data.character
 import kotlinx.coroutines.flow.Flow
 
 interface CharacterRepository {
-    suspend fun saveCharacter(name: String, rpgSystem: String, systemData: String)
+    suspend fun saveCharacter(name: String, rpgSystem: String, systemData: String): Long
+    suspend fun getCharacterById(id: Long): CharacterRecord?
+    suspend fun updateCharacter(id: Long, name: String, systemData: String)
     fun getAllCharactersFlow(): Flow<List<CharacterRecord>>
     suspend fun getAllCharacters(): List<CharacterRecord>
     suspend fun deleteCharacter(id: Long)

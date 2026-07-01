@@ -11,9 +11,22 @@ import kotlinx.coroutines.withContext
 
 class CharacterRepositoryImpl(private val db: SessionZeroDb) : CharacterRepository {
 
-    override suspend fun saveCharacter(name: String, rpgSystem: String, systemData: String) {
+    override suspend fun saveCharacter(name: String, rpgSystem: String, systemData: String): Long =
         withContext(Dispatchers.IO) {
             db.sessionZeroDbQueries.insertCharacter(name, rpgSystem, systemData)
+            db.sessionZeroDbQueries.lastInsertRowId().executeAsOne()
+        }
+
+    override suspend fun getCharacterById(id: Long): CharacterRecord? =
+        withContext(Dispatchers.IO) {
+            db.sessionZeroDbQueries.selectCharacterById(id).executeAsOneOrNull()?.let { entity ->
+                CharacterRecord(entity.id, entity.name, entity.rpg_system, entity.system_data)
+            }
+        }
+
+    override suspend fun updateCharacter(id: Long, name: String, systemData: String) {
+        withContext(Dispatchers.IO) {
+            db.sessionZeroDbQueries.updateCharacter(name, systemData, id)
         }
     }
 

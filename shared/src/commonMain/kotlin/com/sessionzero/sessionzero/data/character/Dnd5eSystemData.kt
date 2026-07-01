@@ -15,6 +15,9 @@ data class Dnd5eSystemData(
     val actions: List<ActionData>,
     val startingEquipment: List<String>,
     val backstory: String,
+    val race: String = "",
+    val subclassSuggestion: String = "",
+    val background: String = "",
 )
 
 @Serializable

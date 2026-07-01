@@ -20,14 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,16 +40,16 @@ import com.sessionzero.sessionzero.ui.theme.accentColor
 fun CharacterListScreen(
     characterRepository: CharacterRepository,
     onNavigateToCreateCharacter: () -> Unit,
+    onNavigateToCharacter: (Long) -> Unit,
     viewModel: CharacterListViewModel = viewModel { CharacterListViewModel(characterRepository) },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is CharacterListContract.Effect.ShowClickedMessage -> {
-                    snackbarHostState.showSnackbar("${effect.characterName} seçildi")
+                is CharacterListContract.Effect.NavigateToCharacterDetail -> {
+                    onNavigateToCharacter(effect.characterId)
                 }
                 CharacterListContract.Effect.NavigateToCreateCharacter -> {
                     onNavigateToCreateCharacter()
@@ -62,7 +59,6 @@ fun CharacterListScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.onIntent(CharacterListContract.Intent.CreateCharacterClicked) },

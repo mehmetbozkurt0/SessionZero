@@ -22,7 +22,7 @@ object CharacterListContract {
     }
 
     sealed interface Effect {
-        data class ShowClickedMessage(val characterName: String) : Effect
+        data class NavigateToCharacterDetail(val characterId: Long) : Effect
         data object NavigateToCreateCharacter : Effect
     }
 }

@@ -9,11 +9,17 @@ insertCharacter:
 INSERT INTO CharacterEntity (name, rpg_system, system_data)
 VALUES (?, ?, ?);
 
+lastInsertRowId:
+SELECT last_insert_rowid();
+
 selectAllCharacters:
 SELECT * FROM CharacterEntity;
 
 selectCharacterById:
 SELECT * FROM CharacterEntity WHERE id = ?;
+
+updateCharacter:
+UPDATE CharacterEntity SET name = ?, system_data = ? WHERE id = ?;
 
 deleteCharacter:
 DELETE FROM CharacterEntity WHERE id = ?;

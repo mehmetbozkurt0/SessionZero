@@ -11,27 +11,68 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class CharacterSheetViewModel(
-    dndClass: DndClass,
+    private val dndClass: DndClass?,       // null → view mode (load by characterId)
+    private val characterId: Long?,        // null → create mode
     private val repository: CharacterRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(
-        CharacterSheetContract.State(
-            dndClass = dndClass,
-            combatStats = mockCombatStats(dndClass),
-            abilityScores = mockAbilityScores(dndClass),
-            actions = mockActions(dndClass),
-        )
-    )
+    private val _state = MutableStateFlow(CharacterSheetContract.State())
     val state: StateFlow<CharacterSheetContract.State> = _state.asStateFlow()
 
     private val _effect = Channel<CharacterSheetContract.Effect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    init {
+        if (characterId != null) {
+            loadCharacter(characterId)
+        } else if (dndClass != null) {
+            _state.value = CharacterSheetContract.State(
+                dndClass = dndClass,
+                isLoading = false,
+                baseHp = dndClass.hitDie,
+                combatStats = mockCombatStats(dndClass),
+                abilityScores = mockAbilityScores(dndClass),
+                actions = mockActions(dndClass),
+            )
+        }
+    }
+
+    private fun loadCharacter(id: Long) = viewModelScope.launch {
+        val record = repository.getCharacterById(id) ?: run {
+            _effect.send(CharacterSheetContract.Effect.NavigateToSystemSelection)
+            return@launch
+        }
+        runCatching {
+            val data = json.decodeFromString<Dnd5eSystemData>(record.systemData)
+            val orderedKeys = listOf("STR", "DEX", "CON", "INT", "WIS", "CHA")
+            _state.value = CharacterSheetContract.State(
+                dndClass = DndClass.fromId(data.className),
+                isLoading = false,
+                characterName = record.name,
+                level = 1,
+                baseHp = data.hp,
+                combatStats = CombatStats(data.armorClass, data.initiative, data.speedFt),
+                abilityScores = orderedKeys.mapNotNull { key ->
+                    data.abilityScores[key]?.let { AbilityScore(key, it) }
+                },
+                actions = data.actions.map { CharacterAction(it.name, it.attackBonus, it.damage) },
+                backstory = data.backstory,
+                race = data.race,
+                subclassSuggestion = data.subclassSuggestion,
+                background = data.background,
+            )
+        }.onFailure {
+            _state.update { it.copy(isLoading = false) }
+        }
+    }
 
     fun onIntent(intent: CharacterSheetContract.Intent) {
         when (intent) {
@@ -47,27 +88,32 @@ class CharacterSheetViewModel(
     }
 
     private fun saveCharacter() = viewModelScope.launch {
-        val state = _state.value
-        val systemData = Json.encodeToString(
+        val s = _state.value
+        val cls = s.dndClass ?: return@launch
+        val systemData = json.encodeToString(
             Dnd5eSystemData(
-                className = state.dndClass.id,
-                displayName = state.dndClass.displayName,
-                primaryStat = state.dndClass.primaryStat,
-                hp = state.baseHp,
-                armorClass = state.combatStats.armorClass,
-                initiative = state.combatStats.initiative,
-                speedFt = state.combatStats.speedFt,
-                abilityScores = state.abilityScores.associate { it.abbreviation to it.score },
-                actions = state.actions.map { ActionData(it.name, it.attackBonus, it.damage) },
-                startingEquipment = state.dndClass.startingEquipment,
-                backstory = state.backstory,
+                className = cls.id,
+                displayName = cls.displayName,
+                primaryStat = cls.primaryStat,
+                hp = s.baseHp,
+                armorClass = s.combatStats.armorClass,
+                initiative = s.combatStats.initiative,
+                speedFt = s.combatStats.speedFt,
+                abilityScores = s.abilityScores.associate { it.abbreviation to it.score },
+                actions = s.actions.map { ActionData(it.name, it.attackBonus, it.damage) },
+                startingEquipment = cls.startingEquipment,
+                backstory = s.backstory,
+                race = s.race,
+                subclassSuggestion = s.subclassSuggestion,
+                background = s.background,
             )
         )
-        repository.saveCharacter(
-            name = state.characterName.ifBlank { state.dndClass.displayName },
-            rpgSystem = "DND5E",
-            systemData = systemData,
-        )
+        val name = s.characterName.ifBlank { cls.displayName }
+        if (characterId != null) {
+            repository.updateCharacter(characterId, name, systemData)
+        } else {
+            repository.saveCharacter(name, "DND5E", systemData)
+        }
         _effect.send(CharacterSheetContract.Effect.ShowSaveSuccess)
     }
 }

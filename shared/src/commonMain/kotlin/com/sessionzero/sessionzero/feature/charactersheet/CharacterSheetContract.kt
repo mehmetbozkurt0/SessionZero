@@ -17,21 +17,25 @@ data class AbilityScore(
 
 data class CharacterAction(
     val name: String,
-    val attackBonus: String, // "+5" veya "KUR 13"
-    val damage: String,      // "1d8+3"
+    val attackBonus: String,
+    val damage: String,
 )
 
 object CharacterSheetContract {
 
     data class State(
-        val dndClass: DndClass,
+        val dndClass: DndClass? = null,
+        val isLoading: Boolean = true,
         val characterName: String = "",
         val level: Int = 1,
-        val baseHp: Int = dndClass.hitDie,
-        val combatStats: CombatStats,
-        val abilityScores: List<AbilityScore>, // STR, DEX, CON, INT, WIS, CHA sırası
-        val actions: List<CharacterAction>,
-        val backstory: String = "...",
+        val baseHp: Int = 0,
+        val combatStats: CombatStats = CombatStats(10, 0, 30),
+        val abilityScores: List<AbilityScore> = emptyList(),
+        val actions: List<CharacterAction> = emptyList(),
+        val backstory: String = "",
+        val race: String = "",
+        val subclassSuggestion: String = "",
+        val background: String = "",
     )
 
     sealed interface Intent {

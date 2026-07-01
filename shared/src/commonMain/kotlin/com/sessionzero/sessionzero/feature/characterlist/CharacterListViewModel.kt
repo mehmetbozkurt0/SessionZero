@@ -53,7 +53,7 @@ class CharacterListViewModel(
         when (intent) {
             is CharacterListContract.Intent.CharacterClicked -> {
                 viewModelScope.launch {
-                    _effect.send(CharacterListContract.Effect.ShowClickedMessage(intent.item.name))
+                    _effect.send(CharacterListContract.Effect.NavigateToCharacterDetail(intent.item.id))
                 }
             }
             CharacterListContract.Intent.CreateCharacterClicked -> {
