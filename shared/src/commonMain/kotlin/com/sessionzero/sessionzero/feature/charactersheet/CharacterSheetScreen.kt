@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -576,10 +577,10 @@ private fun DashboardRow(state: CharacterSheetContract.State, accent: Color) {
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         DashboardStatCard(label = "AC", value = "${state.combatStats.armorClass}", accent = accent, modifier = Modifier.weight(1f))
-        DashboardStatCard(label = "Initiative", value = state.combatStats.initiative.toSignedString(), accent = accent, modifier = Modifier.weight(1f))
+        DashboardStatCard(label = "Init", value = state.combatStats.initiative.toSignedString(), accent = accent, modifier = Modifier.weight(1f))
         DashboardStatCard(label = "Speed", value = "${state.combatStats.speedFt}ft", accent = accent, modifier = Modifier.weight(1f))
         DashboardStatCard(label = "Prof.", value = state.proficiencyBonus.toSignedString(), accent = accent, modifier = Modifier.weight(1f))
-        DashboardStatCard(label = "Pass. Perc.", value = "${state.passivePerception}", accent = accent, modifier = Modifier.weight(1f))
+        DashboardStatCard(label = "Passive", value = "${state.passivePerception}", accent = accent, modifier = Modifier.weight(1f))
     }
 }
 
@@ -602,12 +603,16 @@ private fun DashboardStatCard(label: String, value: String, accent: Color, modif
                 fontWeight = FontWeight.Bold,
                 color = accent,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = label.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -861,9 +866,6 @@ private fun SkillsPanel(
     accent: Color,
     onToggleSkill: (Dnd5eSkill) -> Unit,
 ) {
-    val skills = Dnd5eSkill.entries
-    val columns = skills.chunked((skills.size + 1) / 2)
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = SheetCardShape,
@@ -871,23 +873,16 @@ private fun SkillsPanel(
         border = sheetBorder(),
         tonalElevation = 0.dp,
     ) {
-        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            columns.forEachIndexed { columnIndex, columnSkills ->
-                Column(modifier = Modifier.weight(1f)) {
-                    columnSkills.forEach { skill ->
-                        SkillRow(
-                            skill = skill,
-                            modifierValue = state.skillModifier(skill),
-                            isProficient = skill in state.skillProficiencies,
-                            isEditing = state.isEditing,
-                            accent = accent,
-                            onToggle = { onToggleSkill(skill) },
-                        )
-                    }
-                }
-                if (columnIndex < columns.lastIndex) {
-                    Spacer(Modifier.width(12.dp))
-                }
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+            Dnd5eSkill.entries.forEach { skill ->
+                SkillRow(
+                    skill = skill,
+                    modifierValue = state.skillModifier(skill),
+                    isProficient = skill in state.skillProficiencies,
+                    isEditing = state.isEditing,
+                    accent = accent,
+                    onToggle = { onToggleSkill(skill) },
+                )
             }
         }
     }
@@ -907,12 +902,13 @@ private fun SkillRow(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (isEditing) Modifier.clickable(onClick = onToggle) else Modifier)
-            .padding(vertical = 5.dp),
+            .padding(vertical = 8.dp),
     ) {
         Text(
             text = if (isProficient) "◈" else "◇",
             style = MaterialTheme.typography.bodyMedium,
             color = if (isProficient) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
             modifier = Modifier.width(18.dp),
         )
         Text(
@@ -920,18 +916,25 @@ private fun SkillRow(
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
             color = if (isProficient) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(28.dp),
+            maxLines = 1,
+            modifier = Modifier.width(32.dp),
         )
         Text(
             text = skill.displayName,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = skill.ability,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(32.dp),
+            textAlign = TextAlign.End,
         )
     }
 }
